@@ -6,18 +6,21 @@ local app_args = { ... }
 local appFrame = win.create_app_frame ()
 
 
-local APP_TITLE      = "Menu"
+local APP_TITLE         = "Single"
 
 -- ids should be between 1 - 65535
 
 -- control ids
-local ID_MENUBTN     = 101
+local ID_MENUBTN        = 101
 
 -- command ids
-local IDM_ONE        = 1001
-local IDM_TWO        = 1002
-local IDM_THREE      = 1003
-local IDM_QUITAPP    = 1004
+local IDM_ONE           = 1001
+local IDM_TWO           = 1002
+local IDM_THREE         = 1003
+local IDM_QUITAPP       = 1004
+
+-- unique id for app frame
+local ID_MYAPP_FRAME    = 12673
 
 
 -- handle control, wanted and custom events
@@ -157,6 +160,21 @@ end
 
 
 function appFrame:on_create ()
+   -- single instance, look for existing frame
+   local instance = self:get_desktop ():get_wnd_by_id (ID_MYAPP_FRAME, false)
+
+   -- if found
+   if instance then
+      -- bring running instance to top
+      instance:set_active_top_frame ()
+
+      -- and drop out
+      return false
+   end
+
+   -- not found, change frame id to ID_MYAPP_FRAME
+   self:set_id (ID_MYAPP_FRAME)
+
 	-- add title bar and close btn, close btn will have focus
 	-- frame wnd text displays in running app list
 	self:dress (APP_TITLE)
