@@ -21,7 +21,7 @@ Version
 
 Minetest Version
 ================
-This mod was developed on version 5.5.0
+This mod was developed on version 5.5.0 (should run on 5.3.0)
 
 
 Dependencies
@@ -42,7 +42,7 @@ Copy the 'lwcomputers_software' folder to your mods folder.
 
 Bug Report
 ==========
-
+https://forum.minetest.net/viewtopic.php?f=9&t=28302
 
 
 Description
