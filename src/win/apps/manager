@@ -22,6 +22,7 @@ local ID_LABEL          = 111
 local ID_LOG            = 112
 local ID_CLEAN          = 113
 local ID_VERSION        = 114
+local ID_USERS          = 115
 
 local ID_NAME           = 200
 local ID_PATH           = 201
@@ -33,6 +34,12 @@ local ID_DTLIST         = 300
 local ID_DEFTHEME       = 400
 local ID_COLORDEMO      = 401
 local ID_COLORLIST      = 402
+
+local ID_OWNER          = 500
+local ID_USERLIST       = 501
+local ID_USERADD        = 502
+local ID_USERREMOVE     = 503
+local ID_USEREDIT       = 504
 
 local ID_DTMANAGE_FRAME = 34176
 
@@ -380,6 +387,151 @@ end
 
 
 
+-- userList class ------------------------------------------------------
+local userList = win.popupFrame:base ()
+
+function userList:on_create ()
+	self:dress ("Users")
+
+	local rt = self:get_desktop ():get_work_area ()
+
+	local lbl = win.labelWindow:new (self, ID_OWNER, 1, 1, "Owner:"..security.owner () or "")
+	lbl:set_bg_color (self:get_bg_color ())
+
+	self.ul_list = win.listWindow:new (self, ID_USERLIST, 1, 2, 21, rt.height - 6)
+
+	self.ul_add = win.buttonWindow:new (self, ID_USERADD, 1, rt.height - 4, " Add ")
+	self.ul_edit = win.buttonWindow:new (self, ID_USEREDIT, 7, rt.height - 4, " Edit ")
+	self.ul_remove = win.buttonWindow:new (self, ID_USERREMOVE, 14, rt.height - 4, " Remove ")
+
+	self:load_list ()
+
+	self:move (nil, nil, 23, rt.height - 2)
+
+	return true
+end
+
+
+function userList:on_event (event, p1, p2, p3, p4, p5, ...)
+	if event == "btn_click" then
+		if p1:get_id () == ID_USERADD then
+			self:add_user ()
+
+			return true
+		end
+
+		if p1:get_id () == ID_USEREDIT then
+			self:edit_user ()
+
+			return true
+		end
+
+		if p1:get_id () == ID_USERREMOVE then
+			self:remove_user ()
+
+			return true
+		end
+
+	elseif event == "list_double_click" then
+		if p1:get_id () == ID_USERLIST then
+			self:edit_user ()
+
+			return true
+		end
+	end
+
+	return false
+end
+
+
+function userList:load_list ()
+	self.ul_list:reset_content ()
+	local list = security.access_list () or { }
+
+	for i = 1, #list, 1 do
+		self.ul_list:add_string (list[i], list[i])
+	end
+
+	self.ul_list:sort (false)
+end
+
+
+function userList:add_user ()
+	local new_user =
+		cmndlg.input (self, "Add User", "User name", nil, nil, nil,
+			function (str)
+				if str:trim ():len () < 1 then
+					return false
+				end
+
+				local list = security.access_list () or { }
+
+				for i = 1, #list, 1 do
+					if str == list[i] then
+						return false
+					end
+				end
+
+				return true
+			end)
+
+	if new_user then
+		security.add_access (new_user)
+		self:load_list ()
+	end
+end
+
+
+function userList:edit_user ()
+	local old_user = self.ul_list:get_string ()
+
+	if old_user then
+		local new_user =
+			cmndlg.input (self, "Edit User", "User name", old_user, nil, nil,
+				function (str)
+					if str:trim ():len () < 1 then
+						return false
+					end
+
+					if str == old_user then
+						return true
+					end
+
+					local list = security.access_list () or { }
+
+					for i = 1, #list, 1 do
+						if str == list[i] then
+							return false
+						end
+					end
+
+					return true
+				end)
+
+		if new_user then
+			security.remove_access (old_user)
+			security.add_access (new_user)
+			self:load_list ()
+		end
+	end
+end
+
+
+function userList:remove_user ()
+	local old_user = self.ul_list:get_string ()
+
+	if old_user then
+		if cmndlg.confirm (self, "Remove User",
+								 "Are you sure you want to remove "..old_user, false) then
+			security.remove_access (old_user)
+			self:load_list ()
+		end
+	end
+end
+-- end userList class --------------------------------------------------
+
+
+
 function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
 	if event == "btn_click" then
 		if p1:get_id () == ID_DTSELECT then
@@ -439,6 +591,11 @@ function appFrame:on_event (event, p1, p2, p3, p4, p5, ...)
 
 		if p1:get_id () == ID_CLEAN then
 			self:clean_sys ()
+			return true
+		end
+
+		if p1:get_id () == ID_USERS then
+			userList:new (self):do_modal ()
 			return true
 		end
 
@@ -591,6 +748,10 @@ function appFrame:on_create ()
 	win.buttonWindow:new (self, ID_LABEL, left, top + 11,     "  Name ")
 	win.buttonWindow:new (self, ID_LOG, left, top + 12,       "  Log  ")
 	win.buttonWindow:new (self, ID_CLEAN, left, top + 13,     " Clean ")
+
+	if security.owner () then
+		win.buttonWindow:new (self, ID_USERS, left, top + 14,     " Users ")
+	end
 
 	self:load_app_list ()
 
