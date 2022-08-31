@@ -3,7 +3,7 @@ local private = ...
 
 
 function win.version ()
-   return 1.0
+   return 1.01
 end
 
 
