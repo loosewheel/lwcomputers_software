@@ -710,7 +710,7 @@ function appFrame:replace_all (findText, replaceText)
 		local editText = self.app_editor:get_text ()
 		local first, last = editText:find (self.app_find_text, (self.app_editor:get_sel (true)), true)
 		while first do
-			if (os.clock () - invoked) > 3.0 then
+			if (os.clock () - invoked) > 0.2 then
 				os.sleep (0.1)
 				invoked = os.clock ()
 			end
